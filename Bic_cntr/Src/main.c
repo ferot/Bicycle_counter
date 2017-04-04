@@ -33,9 +33,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_hal.h"
-#include "tm_stm32_hd44780.h"
-/* USER CODE BEGIN Includes */
 
+/* USER CODE BEGIN Includes */
+#include "tm_stm32_hd44780.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -78,32 +78,12 @@ int main(void)
   MX_GPIO_Init();
 
   /* USER CODE BEGIN 2 */
-	 int f = 3;
-//	 char buf[20];
-	 char buf1[]={"hello!"};
-
-	 //Inicjalizacja wyswietlacza, podajemy wartosc wierszy i kolumn
+	 //Screen Initialization
 	 TM_HD44780_Init(16, 2);
 
-	 //Wypisanie stringu na wyswietlaczu
-	 TM_HD44780_Puts(0, 0, "STM32F4 Discover");
+	 //Some basic test output on LCD
+	 TM_HD44780_Puts(0, 0, "0 km/h");
 
-	 itoa(f, buf1, 10);
-	 TM_HD44780_Puts(0, 1, buf1);
-
-	 Delayms(4000);
-
-	 TM_HD44780_Clear();
-
-	 //Zapala kursor
-	 TM_HD44780_CursorOn();
-	 TM_HD44780_BlinkOn();
-
-	 //Wpisanie tekstu
-	 TM_HD44780_Puts(0, 1, "16x2 HD44780 LCD");
-
-	 itoa(34243, buf1, 10);
-	 TM_HD44780_Puts(0, 0, buf1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
