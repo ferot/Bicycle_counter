@@ -36,6 +36,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "tm_stm32_hd44780.h"
+#include "menu.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -56,15 +57,19 @@ static void MX_GPIO_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-
+int draw_state_lcd(menu_state *ms);
 /* USER CODE END 0 */
 
 int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
+	 menu_state menu[] = {
+			 {.patterns = {{0,FIRST_ROW,"V:"},{7,FIRST_ROW,"km/h"}, {12,FIRST_ROW,"A:"},{15,FIRST_ROW,"G"},{0,SECOND_ROW,"T:"}, {4, SECOND_ROW,"h"}, {7, SECOND_ROW,"m"}, {10, SECOND_ROW,"s"}}, .state = MAIN_MENU},
+			 {.patterns = {{0,SECOND_ROW,"SPEED:"}, {12,SECOND_ROW, "km/h"}, {0,FIRST_ROW,"<AVG> ACCEL:"},{15,FIRST_ROW,"G"}}, .state = STAT_MENU},
+			 {.patterns = {{0,FIRST_ROW,"<TOTAL> DIST:"}, {14,SECOND_ROW,"km"}}, .state = STAT_MENU2}
+			 };
+	 /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
 
@@ -80,9 +85,9 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	 //Screen Initialization
 	 TM_HD44780_Init(16, 2);
-
 	 //Some basic test output on LCD
-	 TM_HD44780_Puts(0, 0, "0 km/h");
+//	 TM_HD44780_Puts(0, 4, "0 km/h");
+
 
   /* USER CODE END 2 */
 
@@ -90,6 +95,15 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  switch((menu[0].state))
+	  {
+	  case MAIN_MENU:
+		  draw_state_lcd(&menu[0]);
+		  break;
+	  case STAT_MENU:
+		  draw_state_lcd(&menu[2]);
+		  break;
+	  }
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
