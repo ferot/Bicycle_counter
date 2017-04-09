@@ -66,7 +66,7 @@ static void MX_TIM10_Init(void);
  */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == MENU_BUTTON_Pin) {
-		if (toggled_menu < MENU_SIZE) {
+		if (toggled_menu < MENU_SIZE - 1) {
 			toggled_menu++;
 		} else {
 			toggled_menu = MAIN_MENU;
