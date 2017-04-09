@@ -43,7 +43,7 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+short int last_option;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -53,7 +53,14 @@ static void MX_GPIO_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-
+static short int toggled_menu = MAIN_MENU;
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	if (toggled_menu < MENU_SIZE) {
+		toggled_menu++;
+	} else {
+		toggled_menu = MAIN_MENU;
+	}
+}
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -66,10 +73,10 @@ int main(void)
   /* USER CODE BEGIN 1 */
 	 menu_state menu[] = {
 			 {.patterns = {{0,FIRST_ROW,"V:"},{7,FIRST_ROW,"km/h"}, {12,FIRST_ROW,"A:"},{15,FIRST_ROW,"G"},{0,SECOND_ROW,"T:"}, {4, SECOND_ROW,"h"}, {7, SECOND_ROW,"m"}, {10, SECOND_ROW,"s"}}, .state = MAIN_MENU},
-			 {.patterns = {{0,SECOND_ROW,"SPEED:"}, {12,SECOND_ROW, "km/h"}, {0,FIRST_ROW,"<AVG> ACCEL:"},{15,FIRST_ROW,"G"}}, .state = STAT_MENU},
-			 {.patterns = {{0,FIRST_ROW,"<TOTAL> DIST:"}, {14,SECOND_ROW,"km"}}, .state = STAT_MENU2}
+			 {.patterns = {{1,SECOND_ROW,"SPEED:"}, {12,SECOND_ROW, "km/h"}, {0,FIRST_ROW,"<AVG> ACCEL:"},{15,FIRST_ROW,"G"}}, .state = STAT_MENU},
+			 {.patterns = {{2,FIRST_ROW,"<TOTAL> DIST:"}, {14,SECOND_ROW,"km"}}, .state = STAT_MENU2}
 			 };
-	 /* USER CODE END 1 */
+  /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
 
@@ -93,22 +100,29 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-	  switch((menu[0].state))
-	  {
-	  case MAIN_MENU:
-		  draw_state_lcd(&menu[0]);
-		  break;
-	  case STAT_MENU:
-		  draw_state_lcd(&menu[2]);
-		  break;
-	  }
-  /* USER CODE END WHILE */
+	while (1) {
+		if (last_option != toggled_menu) {
+			switch (toggled_menu) {
+			case MAIN_MENU:
+				//TODO: evalue velocity and other variables
+				draw_state_lcd(&menu[MAIN_MENU]);
+				break;
+			case STAT_MENU:
+				//TODO: evalue average and total variables
+				draw_state_lcd(&menu[STAT_MENU]);
+				break;
+			case STAT_MENU2:
+				//TODO: evalue average and total variables
+				draw_state_lcd(&menu[STAT_MENU2]);
+				break;
+			}
+			last_option = toggled_menu;
+		}
+		/* USER CODE END WHILE */
 
-  /* USER CODE BEGIN 3 */
+		/* USER CODE BEGIN 3 */
 
-  }
+	}
   /* USER CODE END 3 */
 
 }
@@ -183,6 +197,7 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
@@ -198,12 +213,22 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : MENU_BUTTON_Pin */
+  GPIO_InitStruct.Pin = MENU_BUTTON_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(MENU_BUTTON_GPIO_Port, &GPIO_InitStruct);
+
   /*Configure GPIO pins : LCD_RS_Pin LCD_E_Pin */
   GPIO_InitStruct.Pin = LCD_RS_Pin|LCD_E_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
 }
 
