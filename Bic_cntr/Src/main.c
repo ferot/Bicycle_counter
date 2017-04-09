@@ -92,9 +92,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	 //Screen Initialization
 	 TM_HD44780_Init(16, 2);
-	 //Some basic test output on LCD
-//	 TM_HD44780_Puts(0, 4, "0 km/h");
-
 
   /* USER CODE END 2 */
 
