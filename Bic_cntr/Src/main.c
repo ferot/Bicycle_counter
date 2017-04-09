@@ -54,8 +54,9 @@ static void MX_GPIO_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 static short int toggled_menu = MAIN_MENU;
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-	if (toggled_menu < MENU_SIZE) {
+	if (toggled_menu < MENU_SIZE - 1) {
 		toggled_menu++;
 	} else {
 		toggled_menu = MAIN_MENU;
