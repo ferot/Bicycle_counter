@@ -54,11 +54,17 @@ static void MX_GPIO_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 static short int toggled_menu = MAIN_MENU;
+static short int round_finished = 0;
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-	if (toggled_menu < MENU_SIZE) {
-		toggled_menu++;
-	} else {
-		toggled_menu = MAIN_MENU;
+	if (GPIO_Pin == MENU_BUTTON_Pin) {
+		if (toggled_menu < MENU_SIZE) {
+			toggled_menu++;
+		} else {
+			toggled_menu = MAIN_MENU;
+		}
+	} else if (GPIO_Pin == CONTACTRON_Pin) {
+		round_finished = 1;
 	}
 }
 /* USER CODE END PFP */
@@ -101,6 +107,13 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	while (1) {
+		if(round_finished)
+		{
+			TM_HD44780_Puts(0,0,"CONTACTRON !!!");
+			round_finished = 0;
+			Delayms(100);
+			TM_HD44780_Clear();
+		}
 		if (last_option != toggled_menu) {
 			switch (toggled_menu) {
 			case MAIN_MENU:
@@ -118,9 +131,9 @@ int main(void)
 			}
 			last_option = toggled_menu;
 		}
-		/* USER CODE END WHILE */
+  /* USER CODE END WHILE */
 
-		/* USER CODE BEGIN 3 */
+  /* USER CODE BEGIN 3 */
 
 	}
   /* USER CODE END 3 */
@@ -213,6 +226,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : CONTACTRON_Pin */
+  GPIO_InitStruct.Pin = CONTACTRON_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(CONTACTRON_GPIO_Port, &GPIO_InitStruct);
+
   /*Configure GPIO pin : MENU_BUTTON_Pin */
   GPIO_InitStruct.Pin = MENU_BUTTON_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
@@ -227,8 +246,11 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 
 }
 
