@@ -14,16 +14,17 @@
 #define STAT_MENU2 2	//stored overall average results
 #define INFO_MENU 3 //actual configuration (radius, soft version, etc.)
 
+#define MENU_SIZE 3
+
 #define MAX_NR_PATTERNS 10
 /***
  * Struct responsible for storing menu state.
  * State is used to render properly given values
  * in appropriate pattern.
  */
-typedef struct menu_state{
+typedef struct menu_state {
 	short int state;
 	lcd_pattern patterns[MAX_NR_PATTERNS];
-}menu_state;
-
+} menu_state;
 
 #endif /* MENU_H_ */

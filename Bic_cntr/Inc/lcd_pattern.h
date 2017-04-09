@@ -12,12 +12,10 @@
 #define FIRST_ROW 0
 #define SECOND_ROW 1
 
-
-typedef struct lcd_pattern{
-short int row_pos;
-short int col_pos;
-char* text;
-}lcd_pattern;
-
+typedef struct lcd_pattern {
+	short int row_pos;
+	short int col_pos;
+	char* text;
+} lcd_pattern;
 
 #endif /* LCD_PATTERN_H_ */
