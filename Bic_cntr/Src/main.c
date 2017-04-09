@@ -40,22 +40,30 @@
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
+#define TRUE 1
+#define FALSE 0
+TIM_HandleTypeDef htim10;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 short int last_option;
+volatile int round_time_ms;
+static short int toggled_menu = MAIN_MENU;
+static short int round_finished = FALSE;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void Error_Handler(void);
 static void MX_GPIO_Init(void);
+static void MX_TIM10_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-static short int toggled_menu = MAIN_MENU;
-static short int round_finished = 0;
 
+/*
+ * Callback for handling contactron and menu button interrupt vectors
+ */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == MENU_BUTTON_Pin) {
 		if (toggled_menu < MENU_SIZE) {
@@ -64,12 +72,29 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 			toggled_menu = MAIN_MENU;
 		}
 	} else if (GPIO_Pin == CONTACTRON_Pin) {
-		round_finished = 1;
+		round_finished = TRUE;
 	}
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if(htim->Instance == TIM10){
+		round_time_ms++;
+	}
+}
+void my_delay_ms(int value){
+	round_time_ms = 0;
+	HAL_TIM_Base_Start_IT(&htim10);
+	while(round_time_ms <value)
+	{
+//		goto lab1;
+	}
+	return;
 }
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+extern char * eval_velocity();
 int draw_state_lcd(menu_state *ms);
 /* USER CODE END 0 */
 
@@ -94,22 +119,31 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_TIM10_Init();
 
   /* USER CODE BEGIN 2 */
+
 	 //Screen Initialization
 	 TM_HD44780_Init(16, 2);
+
+	 //Some basic test output on LCD
+//	 TM_HD44780_Puts(0, 4, "0 km/h");
+		TM_HD44780_Puts(0,FIRST_ROW,"Counter v.0.1");
+		TM_HD44780_Puts(0,SECOND_ROW, "Aut:Tomek Ferens");
+		my_delay_ms(1000);
+		TM_HD44780_Clear();
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	while (1) {
+
 		if(round_finished)
 		{
-			TM_HD44780_Puts(0,0,"CONTACTRON !!!");
+eval_velocity();
 			round_finished = 0;
-			Delayms(100);
-			TM_HD44780_Clear();
+			round_time_ms = 0;
 		}
 		if (last_option != toggled_menu) {
 			switch (toggled_menu) {
@@ -191,6 +225,22 @@ void SystemClock_Config(void)
 
   /* SysTick_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+}
+
+/* TIM10 init function */
+static void MX_TIM10_Init(void)
+{
+
+  htim10.Instance = TIM10;
+  htim10.Init.Prescaler = 9999;
+  htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim10.Init.Period = 9;
+  htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
 }
 
 /** Configure pins as 
