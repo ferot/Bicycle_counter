@@ -12,9 +12,14 @@
 #define MAIN_MENU 0	//default state - presents actual velocity
 #define STAT_MENU 1	//stored overall average results
 #define STAT_MENU2 2	//stored overall average results
-#define INFO_MENU 3 //actual configuration (radius, soft version, etc.)
+#define USB_CONF_MENU 3 //actual configuration (radius, soft version, etc.)
 
-#define MENU_SIZE 3
+#define USB_SUBSTATE_ACK 4
+#define USB_SUBSTATE_CONF 5
+#define USB_SUBSTATE_FINISHED 5
+#define USB_SUBSTATE_INIT 6
+
+#define MENU_SIZE 4
 
 #define MAX_NR_PATTERNS 10
 /***
@@ -25,6 +30,7 @@
 typedef struct menu_state {
 	short int state;
 	lcd_pattern patterns[MAX_NR_PATTERNS];
+	short int substate;
 } menu_state;
 
 #endif /* MENU_H_ */

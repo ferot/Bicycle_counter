@@ -46,6 +46,7 @@
 #include "usb_device.h"
 
 /* USER CODE BEGIN Includes */
+#include "usbd_cdc_if.h"
 #include "tm_stm32_hd44780.h"
 #include "menu.h"
 /* USER CODE END Includes */
@@ -57,11 +58,19 @@ TIM_HandleTypeDef htim10;
 /* Private variables ---------------------------------------------------------*/
 #define TRUE 1
 #define FALSE 0
+#define RETRY_COUNT 100
 
 short int last_option;
 volatile int round_time_ms;
 static short int toggled_menu = MAIN_MENU;
 static short int round_finished = FALSE;
+
+/*USB Communication related*/
+uint8_t data_to_send[USB_COMM_BUF_SIZE];
+uint8_t message_length = 0;
+
+uint8_t received_data_flag = FALSE;
+uint8_t received_data[40] = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -117,7 +126,8 @@ int main(void)
 	 menu_state menu[] = {
 			 {.patterns = {{0,FIRST_ROW,"V:"},{7,FIRST_ROW,"km/h"}, {12,FIRST_ROW,"A:"},{15,FIRST_ROW,"G"},{0,SECOND_ROW,"T:"}, {4, SECOND_ROW,"h"}, {7, SECOND_ROW,"m"}, {10, SECOND_ROW,"s"}}, .state = MAIN_MENU},
 			 {.patterns = {{1,SECOND_ROW,"SPEED:"}, {12,SECOND_ROW, "km/h"}, {0,FIRST_ROW,"<AVG> ACCEL:"},{15,FIRST_ROW,"G"}}, .state = STAT_MENU},
-			 {.patterns = {{2,FIRST_ROW,"<TOTAL> DIST:"}, {14,SECOND_ROW,"km"}}, .state = STAT_MENU2}
+			 {.patterns = {{2,FIRST_ROW,"<TOTAL> DIST:"}, {14,SECOND_ROW,"km"}}, .state = STAT_MENU2},
+			 {.patterns = {{0,FIRST_ROW,"<USB CONF MODE>"}}, .state = USB_CONF_MENU, .substate = USB_SUBSTATE_INIT}
 			 };
   /* USER CODE END 1 */
 
@@ -145,6 +155,7 @@ int main(void)
 		TM_HD44780_Puts(0,SECOND_ROW, "Aut:Tomek Ferens");
 		my_delay_ms(1000);
 		TM_HD44780_Clear();
+		short int state = menu[USB_CONF_MENU].substate;
 
   /* USER CODE END 2 */
 
@@ -171,6 +182,78 @@ eval_velocity();
 			case STAT_MENU2:
 				//TODO: evalue average and total variables
 				draw_state_lcd(&menu[STAT_MENU2]);
+				break;
+			case USB_CONF_MENU:
+				draw_state_lcd(&menu[USB_CONF_MENU]);
+				//TODO: implementation of usb handshake
+				message_length = sprintf(data_to_send,"cou\n\r");
+				CDC_Transmit_FS(data_to_send, message_length);
+
+				short int retry_count = 0;
+
+				while (state != USB_SUBSTATE_FINISHED  && received_data_flag == TRUE) {
+
+
+//					if (retry_count > RETRY_COUNT) {
+//						TM_HD44780_Puts(0, SECOND_ROW,
+//								"Error in communication!!!");
+//											Delayms(1500);
+//											TM_HD44780_Clear();
+//					//	break;
+//						//TODO: transmit back info to host. clear substate to initial
+//					}
+
+					char buf22[2];
+					itoa(retry_count,buf22,10);
+					TM_HD44780_Puts(0, SECOND_ROW, buf22);
+
+					char buf[USB_COMM_BUF_SIZE] = { 0 };
+
+					for (int i = 0; i < USB_COMM_BUF_SIZE; i++)
+						buf[i] = (char) received_data[i];
+
+					if (state == USB_SUBSTATE_INIT) {
+						if (strstr(buf, "host_ack")) {
+							state = USB_SUBSTATE_ACK;
+							retry_count = 0;
+							received_data_flag = FALSE;
+						} else {
+							retry_count++;
+							Delayms(1000);
+						}
+					}
+
+					if (state == USB_SUBSTATE_ACK) {
+						message_length = sprintf(data_to_send,
+								"provide_set_param\r\n");
+
+						CDC_Transmit_FS(data_to_send, message_length);
+						TM_HD44780_Puts(0, SECOND_ROW, received_data);
+						state = USB_SUBSTATE_CONF;
+						received_data_flag = FALSE;
+//						continue;
+					}
+
+					if (state == USB_SUBSTATE_CONF) {
+						if (1) {
+							message_length = sprintf(data_to_send,
+									"set_param_confirmed\n\r");
+
+							CDC_Transmit_FS(data_to_send, USB_COMM_BUF_SIZE);
+//							TM_HD44780_Puts(0, SECOND_ROW, received_data);
+							TM_HD44780_Puts(0, SECOND_ROW,
+									"Setting <parameter> ...");
+							Delayms(1000);
+							state = USB_SUBSTATE_FINISHED;
+							received_data_flag = FALSE;
+//							break;
+						} else {
+							retry_count++;
+							Delayms(1000);
+						}
+					}
+
+				}
 				break;
 			}
 			last_option = toggled_menu;
