@@ -57,10 +57,13 @@ TIM_HandleTypeDef htim10;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
-short int last_option = MAIN_MENU;
+short int last_option = USB_CONF_MENU;
 volatile int round_time_ms;
-static short int toggled_menu = USB_CONF_MENU;
+static short int toggled_menu = MAIN_MENU;
+
 static short int round_finished = FALSE;
+volatile int time;
+volatile long long periods;
 
 /*USB Communication related*/
 uint8_t data_to_send[USB_COMM_BUF_SIZE];
@@ -68,6 +71,7 @@ uint8_t message_length = 0;
 
 uint8_t received_data_flag = FALSE;
 uint8_t received_data[40] = {0};
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -91,13 +95,18 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 		}
 	} else if (GPIO_Pin == CONTACTRON_Pin) {
 		round_finished = TRUE;
+		periods++;
 	}
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-	if(htim->Instance == TIM10){
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	if (htim->Instance == TIM10) {
 		round_time_ms++;
+		time++;
+		if (time++ >= 1000) {
+			time = 0;
+			tick_time();
+		}
 	}
 }
 void my_delay_ms(int value){
@@ -111,17 +120,18 @@ void my_delay_ms(int value){
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-extern char * eval_velocity();
-int draw_state_lcd(menu_state *ms);
-int usb_set(int * state);
 /* USER CODE END 0 */
 
 int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+	extern char velocity_string[6];
+	extern char time_sec[3];
+	extern char time_min[3];
+	extern char time_hrs[3];
 	 menu_state menu[] = {
-			 {.patterns = {{0,FIRST_ROW,"V:"},{7,FIRST_ROW,"km/h"}, {12,FIRST_ROW,"A:"},{15,FIRST_ROW,"G"},{0,SECOND_ROW,"T:"}, {4, SECOND_ROW,"h"}, {7, SECOND_ROW,"m"}, {10, SECOND_ROW,"s"}}, .state = MAIN_MENU},
+			 {.patterns = {{0,FIRST_ROW,"V:"},{3,FIRST_ROW, velocity_string}, {9,FIRST_ROW,"km/h"}, {0,SECOND_ROW,"T:"}, {3,SECOND_ROW,time_hrs}, {6, SECOND_ROW,"h"},{8,SECOND_ROW,time_min}, {10, SECOND_ROW,"m"}, {12,SECOND_ROW,time_sec}, {14, SECOND_ROW,"s"}}, .state = MAIN_MENU},
 			 {.patterns = {{1,SECOND_ROW,"SPEED:"}, {12,SECOND_ROW, "km/h"}, {0,FIRST_ROW,"<AVG> ACCEL:"},{15,FIRST_ROW,"G"}}, .state = STAT_MENU},
 			 {.patterns = {{2,FIRST_ROW,"<TOTAL> DIST:"}, {14,SECOND_ROW,"km"}}, .state = STAT_MENU2},
 			 {.patterns = {{0,FIRST_ROW,"<USB CONF MODE>"}}, .state = USB_CONF_MENU, .substate = USB_SUBSTATE_INIT}
@@ -146,8 +156,6 @@ int main(void)
 	 //Screen Initialization
 	 TM_HD44780_Init(16, 2);
 
-	 //Some basic test output on LCD
-//	 TM_HD44780_Puts(0, 4, "0 km/h");
 		TM_HD44780_Puts(0,FIRST_ROW,"Counter v.0.1");
 		TM_HD44780_Puts(0,SECOND_ROW, "Aut:Tomek Ferens");
 		my_delay_ms(1000);
@@ -164,9 +172,9 @@ int main(void)
 			round_finished = 0;
 			round_time_ms = 0;
 		}
-
 		switch (toggled_menu) {
 		case MAIN_MENU:
+			time_to_string();
 			//TODO: evalue velocity and other variables
 			break;
 		case STAT_MENU:
@@ -179,17 +187,20 @@ int main(void)
 			if (received_data_flag == TRUE) {
 				received_data_flag = FALSE;
 				int a = usb_set(state);
-				char buf [2];
-				itoa(a,buf,10);
-				TM_HD44780_Puts(0,SECOND_ROW,buf);
-			}else{
-				TM_HD44780_Puts(0,SECOND_ROW,"Awaiting connection...");
+				char buf[2];
+				itoa(a, buf, 10);
+				TM_HD44780_Puts(0, SECOND_ROW, buf);
+			} else {
+				TM_HD44780_Puts(0, SECOND_ROW, "Awaiting connection...");
 			}
 			break;
 		}
 		if (last_option != toggled_menu) {
 			draw_state_lcd(&menu[toggled_menu]);
 			last_option = toggled_menu;
+		} else {
+			draw_state_lcd(&menu[last_option]);
+			Delayms(10);
 		}
 		/* USER CODE END WHILE */
 

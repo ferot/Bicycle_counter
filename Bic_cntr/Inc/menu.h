@@ -23,6 +23,7 @@
 #define MENU_SIZE 4
 
 #define MAX_NR_PATTERNS 10
+
 /***
  * Struct responsible for storing menu state.
  * State is used to render properly given values
@@ -33,5 +34,12 @@ typedef struct menu_state {
 	lcd_pattern patterns[MAX_NR_PATTERNS];
 	short int substate;
 } menu_state;
+
+void tick_time();
+extern void time_to_string();
+extern char * eval_velocity();
+int draw_state_lcd(menu_state *ms);
+int usb_set(int * state);
+
 
 #endif /* MENU_H_ */

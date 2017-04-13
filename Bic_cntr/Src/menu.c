@@ -15,9 +15,16 @@ extern uint8_t received_data_flag;
 extern short int retry_count;
 extern uint8_t data_to_send[USB_COMM_BUF_SIZE];
 extern uint8_t message_length;
-
 short int retry_count = 0;
 
+extern volatile long long periods;
+char velocity_string[6];
+char time_sec[3];
+char time_hrs[3];
+char time_min[3];
+short int t_secs;
+short int t_mins;
+short int t_hours;
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
 
 int draw_state_lcd(menu_state *ms) {
@@ -45,13 +52,35 @@ char * eval_velocity(){
 				strncpy(result,buf,2);
 				strncat(result,",",1);
 				strncat(result,buf2,2);
-//				strncat(result," km/h",5);
-				TM_HD44780_Puts(0,1,result);
-				Delayms(100);
-				TM_HD44780_Clear();
-	return result;
+				strcpy(velocity_string, result);
+//				TM_HD44780_Puts(3,FIRST_ROW,velocity_string);
+
+	return velocity_string;
 }
 
+inline void tick_time() {
+
+	t_secs++;
+	if (t_secs > 59) {
+		t_secs = 0;
+		t_mins++;
+		if (t_mins > 59) {
+			t_mins = 0;
+			t_hours++;
+			if (t_hours > 59) {
+				t_hours = 0;
+				//TODO: Handle days (maybe if overflowed -> dump entry into disk ?)
+			}
+		}
+	}
+
+}
+
+inline void time_to_string() {
+	itoa(t_secs, time_sec, 10);
+	itoa(t_mins, time_min, 10);
+	itoa(t_hours, time_hrs, 10);
+}
 /*
  * Function responsible for handling usb-communication state machine
  */
