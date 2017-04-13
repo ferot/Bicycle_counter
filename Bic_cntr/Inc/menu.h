@@ -8,6 +8,7 @@
 #ifndef MENU_H_
 #define MENU_H_
 #include "lcd_pattern.h"
+#include "common_defs.h"
 
 #define MAIN_MENU 0	//default state - presents actual velocity
 #define STAT_MENU 1	//stored overall average results
