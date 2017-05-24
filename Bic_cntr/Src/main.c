@@ -52,10 +52,15 @@
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+DMA_HandleTypeDef hdma_adc1;
+
 TIM_HandleTypeDef htim10;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+
+uint16_t bat_voltage;
 
 short int last_option = USB_CONF_MENU;
 volatile int round_time_ms;
@@ -78,7 +83,9 @@ uint8_t received_data[40] = {0};
 void SystemClock_Config(void);
 void Error_Handler(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_TIM10_Init(void);
+static void MX_ADC1_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -148,11 +155,14 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_TIM10_Init();
   MX_USB_DEVICE_Init();
+  MX_ADC1_Init();
 
   /* USER CODE BEGIN 2 */
-
+HAL_ADC_Start_DMA(&hadc1, &bat_voltage,1);
+char buf3[5];
 	 //Screen Initialization
 	 TM_HD44780_Init(16, 2);
 
@@ -166,7 +176,9 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	while (1) {
-
+		itoa(bat_voltage, buf3, 10);
+		TM_HD44780_Puts(0, SECOND_ROW, buf3);
+		my_delay_ms(200);
 		if (round_finished) {
 			eval_velocity();
 			round_finished = 0;
@@ -195,6 +207,7 @@ int main(void)
 			}
 			break;
 		}
+
 		if (last_option != toggled_menu) {
 			draw_state_lcd(&menu[toggled_menu]);
 			last_option = toggled_menu;
@@ -202,12 +215,12 @@ int main(void)
 			draw_state_lcd(&menu[last_option]);
 			Delayms(10);
 		}
-		/* USER CODE END WHILE */
+  /* USER CODE END WHILE */
 
-		/* USER CODE BEGIN 3 */
+  /* USER CODE BEGIN 3 */
 
 	}
-	/* USER CODE END 3 */
+  /* USER CODE END 3 */
 
 }
 
@@ -266,6 +279,43 @@ void SystemClock_Config(void)
   HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
+/* ADC1 init function */
+static void MX_ADC1_Init(void)
+{
+
+  ADC_ChannelConfTypeDef sConfig;
+
+    /**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion) 
+    */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV8;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.ScanConvMode = ENABLE;
+  hadc1.Init.ContinuousConvMode = ENABLE;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+    /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
+    */
+  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+}
+
 /* TIM10 init function */
 static void MX_TIM10_Init(void)
 {
@@ -279,6 +329,21 @@ static void MX_TIM10_Init(void)
   {
     Error_Handler();
   }
+
+}
+
+/** 
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void) 
+{
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 
 }
 

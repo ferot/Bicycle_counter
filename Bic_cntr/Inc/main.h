@@ -61,6 +61,8 @@
 #define CONTACTRON_GPIO_Port GPIOC
 #define MENU_BUTTON_Pin GPIO_PIN_0
 #define MENU_BUTTON_GPIO_Port GPIOA
+#define BAT_STATUS_Pin GPIO_PIN_1
+#define BAT_STATUS_GPIO_Port GPIOA
 #define LCD_RS_Pin GPIO_PIN_2
 #define LCD_RS_GPIO_Port GPIOB
 #define LCD_D4_Pin GPIO_PIN_12
