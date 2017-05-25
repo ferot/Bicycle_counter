@@ -137,11 +137,14 @@ int main(void)
 	extern char time_sec[3];
 	extern char time_min[3];
 	extern char time_hrs[3];
+	extern char battery_level[3];
+
 	 menu_state menu[] = {
 			 {.patterns = {{0,FIRST_ROW,"V:"},{3,FIRST_ROW, velocity_string}, {9,FIRST_ROW,"km/h"}, {0,SECOND_ROW,"T:"}, {3,SECOND_ROW,time_hrs}, {6, SECOND_ROW,"h"},{8,SECOND_ROW,time_min}, {10, SECOND_ROW,"m"}, {12,SECOND_ROW,time_sec}, {14, SECOND_ROW,"s"}}, .state = MAIN_MENU},
 			 {.patterns = {{1,SECOND_ROW,"SPEED:"}, {12,SECOND_ROW, "km/h"}, {0,FIRST_ROW,"<AVG> ACCEL:"},{15,FIRST_ROW,"G"}}, .state = STAT_MENU},
 			 {.patterns = {{2,FIRST_ROW,"<TOTAL> DIST:"}, {14,SECOND_ROW,"km"}}, .state = STAT_MENU2},
-			 {.patterns = {{0,FIRST_ROW,"<USB CONF MODE>"}}, .state = USB_CONF_MENU, .substate = USB_SUBSTATE_INIT}
+			 {.patterns = {{0,FIRST_ROW,"<USB CONF MODE>"}}, .state = USB_CONF_MENU, .substate = USB_SUBSTATE_INIT},
+			 {.patterns = {{0,FIRST_ROW,"<BATT LVL[%]>"},{13,FIRST_ROW, battery_level}}, .state = BATT_LEVEL}
 			 };
   /* USER CODE END 1 */
 
@@ -162,8 +165,8 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
 HAL_ADC_Start_DMA(&hadc1, &bat_voltage,1);
-char buf3[5];
-	 //Screen Initialization
+
+//Screen Initialization
 	 TM_HD44780_Init(16, 2);
 
 		TM_HD44780_Puts(0,FIRST_ROW,"Counter v.0.1");
@@ -176,9 +179,6 @@ char buf3[5];
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	while (1) {
-		itoa(bat_voltage, buf3, 10);
-		TM_HD44780_Puts(0, SECOND_ROW, buf3);
-		my_delay_ms(200);
 		if (round_finished) {
 			eval_velocity();
 			round_finished = 0;
@@ -194,6 +194,9 @@ char buf3[5];
 			break;
 		case STAT_MENU2:
 			//TODO: evalue average and total variables
+			break;
+		case BATT_LEVEL:
+			eval_battery_level();
 			break;
 		case USB_CONF_MENU:
 			if (received_data_flag == TRUE) {

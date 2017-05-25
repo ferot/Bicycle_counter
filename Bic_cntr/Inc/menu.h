@@ -14,13 +14,14 @@
 #define STAT_MENU 1	//stored overall average results
 #define STAT_MENU2 2	//stored overall average results
 #define USB_CONF_MENU 3 //actual configuration (radius, soft version, etc.)
+#define BATT_LEVEL 4
 
 #define USB_SUBSTATE_ACK 4
 #define USB_SUBSTATE_CONF 5
 #define USB_SUBSTATE_FINISHED 5
 #define USB_SUBSTATE_INIT 6
 
-#define MENU_SIZE 4
+#define MENU_SIZE 5
 
 #define MAX_NR_PATTERNS 10
 

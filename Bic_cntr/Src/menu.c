@@ -9,7 +9,7 @@
 #include "tm_stm32_hd44780.h"
 
 extern volatile int round_time_ms;
-
+extern uint16_t bat_voltage;
 extern uint8_t received_data[USB_COMM_BUF_SIZE];
 extern uint8_t received_data_flag;
 extern short int retry_count;
@@ -18,6 +18,7 @@ extern uint8_t message_length;
 short int retry_count = 0;
 
 extern volatile long long periods;
+char battery_level[3];
 char velocity_string[6];
 char time_sec[3];
 char time_hrs[3];
@@ -26,6 +27,15 @@ short int t_secs;
 short int t_mins;
 short int t_hours;
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
+
+int eval_battery_level(){
+
+	float batt_level_percent = (float)bat_voltage/4095.0;
+	batt_level_percent*=100;
+	itoa(batt_level_percent, battery_level, 10);
+
+	return 0;
+}
 
 int draw_state_lcd(menu_state *ms) {
 	TM_HD44780_Clear();
