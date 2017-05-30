@@ -59,7 +59,7 @@ TIM_HandleTypeDef htim10;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+#define BATT_CRITICAL_LEVEL 35
 uint16_t bat_voltage;
 
 short int last_option = USB_CONF_MENU;
@@ -93,6 +93,16 @@ static void MX_ADC1_Init(void);
 /*
  * Callback for handling contactron and menu button interrupt vectors
  */
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+if(hadc->Instance == hadc1.Instance)
+{
+	if(eval_battery_level() < BATT_CRITICAL_LEVEL)
+		;//TODO:alert user; save state;
+}
+}
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == MENU_BUTTON_Pin) {
 		if (toggled_menu < MENU_SIZE - 1) {
@@ -127,6 +137,8 @@ void my_delay_ms(int value){
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+void battery_lvl_to_char(float batt_level_percent);
+int eval_battery_level();
 /* USER CODE END 0 */
 
 int main(void)
@@ -196,7 +208,7 @@ HAL_ADC_Start_DMA(&hadc1, &bat_voltage,1);
 			//TODO: evalue average and total variables
 			break;
 		case BATT_LEVEL:
-			eval_battery_level();
+			battery_lvl_to_char(eval_battery_level());
 			break;
 		case USB_CONF_MENU:
 			if (received_data_flag == TRUE) {

@@ -32,11 +32,11 @@ int eval_battery_level(){
 
 	float batt_level_percent = (float)bat_voltage/4095.0;
 	batt_level_percent*=100;
-	itoa(batt_level_percent, battery_level, 10);
-
-	return 0;
+	return batt_level_percent;
 }
-
+void battery_lvl_to_char(float batt_level_percent){
+	itoa(batt_level_percent, battery_level, 10);
+}
 int draw_state_lcd(menu_state *ms) {
 	TM_HD44780_Clear();
 	for (int i = 0; i < MAX_NR_PATTERNS; i++) {
