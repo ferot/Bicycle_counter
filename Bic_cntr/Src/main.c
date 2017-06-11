@@ -49,6 +49,7 @@
 #include "usbd_cdc_if.h"
 #include "tm_stm32_hd44780.h"
 #include "menu.h"
+#include "Battery_Control/Battery_Control.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -59,7 +60,7 @@ TIM_HandleTypeDef htim10;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-#define BATT_CRITICAL_LEVEL 35
+extern Battery_Control BattControl;
 uint16_t bat_voltage;
 
 short int last_option = USB_CONF_MENU;
@@ -99,7 +100,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
 if(hadc->Instance == hadc1.Instance)
 {
-	if(eval_battery_level() < BATT_CRITICAL_LEVEL)
+	if(BattControl.evalBattLevel(&BattControl) < BattControl.low_level_threshold)
 		;//TODO:alert user; save state;
 }
 }
@@ -144,8 +145,6 @@ void my_delay_ms(int value){
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-void battery_lvl_to_char(float batt_level_percent);
-int eval_battery_level();
 /* USER CODE END 0 */
 
 int main(void)
@@ -157,14 +156,13 @@ int main(void)
 	extern char time_sec[3];
 	extern char time_min[3];
 	extern char time_hrs[3];
-	extern char battery_level[3];
 
 	 menu_state menu[] = {
 			 {.patterns = {{0,FIRST_ROW,"V:"},{3,FIRST_ROW, velocity_string}, {9,FIRST_ROW,"km/h"}, {0,SECOND_ROW,"T:"}, {3,SECOND_ROW,time_hrs}, {6, SECOND_ROW,"h"},{8,SECOND_ROW,time_min}, {10, SECOND_ROW,"m"}, {12,SECOND_ROW,time_sec}, {14, SECOND_ROW,"s"}}, .state = MAIN_MENU},
 			 {.patterns = {{0,FIRST_ROW,"<AVG>"},{0,SECOND_ROW,"SPEED:"}, {12,SECOND_ROW, "km/h"}}, .state = STAT_MENU},
 			 {.patterns = {{2,FIRST_ROW,"<TOTAL> DIST:"}, {5,SECOND_ROW, distance_string}, {14,SECOND_ROW,"km"}}, .state = STAT_MENU2},
 			 {.patterns = {{0,FIRST_ROW,"<USB CONF MODE>"}}, .state = USB_CONF_MENU, .substate = USB_SUBSTATE_INIT},
-			 {.patterns = {{0,FIRST_ROW,"<BATT LVL[%]>"},{13,FIRST_ROW, battery_level}}, .state = BATT_LEVEL}
+			 {.patterns = {{0,FIRST_ROW,"<BATT LVL[%]>"},{13,FIRST_ROW, BattControl.str_battery_level}}, .state = BATT_LEVEL}
 			 };
   /* USER CODE END 1 */
 
@@ -184,7 +182,7 @@ int main(void)
   MX_ADC1_Init();
 
   /* USER CODE BEGIN 2 */
-HAL_ADC_Start_DMA(&hadc1, &bat_voltage,1);
+HAL_ADC_Start_DMA(&hadc1, &(BattControl.bat_voltage), 1);
 
 //Screen Initialization
 	 TM_HD44780_Init(16, 2);
@@ -218,7 +216,7 @@ HAL_ADC_Start_DMA(&hadc1, &bat_voltage,1);
 			eval_dist_avg_vel();
 			break;
 		case BATT_LEVEL:
-			battery_lvl_to_char(eval_battery_level());
+			BattControl.battlvlToStr(&BattControl);
 			break;
 		case USB_CONF_MENU:
 			if (received_data_flag == TRUE) {
