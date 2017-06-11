@@ -46,7 +46,12 @@ int draw_state_lcd(menu_state *ms) {
 
 	return 0;
 }
-
+void reset_basic_params(){
+	t_secs = 0;
+	t_mins = 0;
+	t_hours = 0;
+	strcpy(velocity_string, "0");
+}
 char * eval_velocity(){
 	char result [16] = {0};
 	//			TM_HD44780_Puts(0,0,"CONTACTRON !!!");

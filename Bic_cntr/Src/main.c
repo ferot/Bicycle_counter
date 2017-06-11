@@ -68,6 +68,7 @@ static short int toggled_menu = MAIN_MENU;
 
 static short int round_finished = FALSE;
 volatile int time;
+volatile int inactivity_timeout;
 volatile long long periods;
 
 /*USB Communication related*/
@@ -76,7 +77,7 @@ uint8_t message_length = 0;
 
 uint8_t received_data_flag = FALSE;
 uint8_t received_data[40] = {0};
-
+void reset_basic_params();
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -120,9 +121,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM10) {
 		round_time_ms++;
 		time++;
+		inactivity_timeout++;
 		if (time++ >= 1000) {
 			time = 0;
 			tick_time();
+		}
+		if (inactivity_timeout > 10000){
+		//TODO: save state avg vel,dist,time
+			eval_velocity();
+			reset_basic_params();
 		}
 	}
 }
@@ -195,6 +202,7 @@ HAL_ADC_Start_DMA(&hadc1, &bat_voltage,1);
 			eval_velocity();
 			round_finished = 0;
 			round_time_ms = 0;
+			inactivity_timeout = 0;
 		}
 		switch (toggled_menu) {
 		case MAIN_MENU:
