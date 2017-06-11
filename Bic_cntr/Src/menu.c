@@ -15,22 +15,6 @@ extern uint8_t data_to_send[USB_COMM_BUF_SIZE];
 extern uint8_t message_length;
 short int retry_count = 0;
 
-char velocity_string[6];
-char distance_string[15];
-char time_sec[3];
-char time_hrs[3];
-char time_min[3];
-
-short int t_secs;
-short int t_mins;
-short int t_hours;
-
-char dist_string[15];
-int t_secs_total;
-int t_mins_total;
-int t_hours_total;
-int dist_total;
-
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
 
 int draw_state_lcd(menu_state *ms) {
@@ -42,80 +26,7 @@ int draw_state_lcd(menu_state *ms) {
 
 	return 0;
 }
-void aggregate_basic_params(){
 
-t_secs_total += t_secs;
-t_mins_total += t_mins;
-t_hours_total += t_hours;
-dist_total++;
-
-}
-void eval_dist_avg_vel(){
-	float radius = 0.5 / 1000;
-	float dist = 2 * 3.14 * radius * dist_total;
-
-	char result[16] = { 0 };
-	char buf2[4];
-	char buf[16];
-	int decimal_part = ((int) (dist * 100.0)) % 100;
-	itoa((int) dist, buf, 10);
-	itoa(decimal_part, buf2, 10);
-
-	strncpy(result, buf, 2);
-	strncat(result, ",", 1);
-	strncat(result, buf2, 2);
-	strcpy(distance_string, result);
-}
-void reset_basic_params(){
-	t_secs = 0;
-	t_mins = 0;
-	t_hours = 0;
-	strcpy(velocity_string, "0");
-}
-char * eval_velocity(){
-	char result [16] = {0};
-	//			TM_HD44780_Puts(0,0,"CONTACTRON !!!");
-				float radius = 0.5/1000;
-				float time_s = round_time_ms/1000.0;
-				float velocity = 2*3.14* radius/(time_s/(3600));
-				char buf2[4];
-				char buf[16];
-				int decimal_part = ((int)(velocity*100.0)) % 100;
-				itoa((int)velocity,buf,10);
-				itoa(decimal_part,buf2,10);
-
-				strncpy(result,buf,2);
-				strncat(result,",",1);
-				strncat(result,buf2,2);
-				strcpy(velocity_string, result);
-//				TM_HD44780_Puts(3,FIRST_ROW,velocity_string);
-
-	return velocity_string;
-}
-
-inline void tick_time() {
-
-	t_secs++;
-	if (t_secs > 59) {
-		t_secs = 0;
-		t_mins++;
-		if (t_mins > 59) {
-			t_mins = 0;
-			t_hours++;
-			if (t_hours > 59) {
-				t_hours = 0;
-				//TODO: Handle days (maybe if overflowed -> dump entry into disk ?)
-			}
-		}
-	}
-
-}
-
-inline void time_to_string() {
-	itoa(t_secs, time_sec, 10);
-	itoa(t_mins, time_min, 10);
-	itoa(t_hours, time_hrs, 10);
-}
 /*
  * Function responsible for handling usb-communication state machine
  */

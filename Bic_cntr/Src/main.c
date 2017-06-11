@@ -50,6 +50,7 @@
 #include "tm_stm32_hd44780.h"
 #include "menu.h"
 #include "Battery_Control/Battery_Control.h"
+#include "Basic_Parameters/Basic_parameters.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -61,10 +62,11 @@ TIM_HandleTypeDef htim10;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 extern Battery_Control BattControl;
+extern Basic_Parameter BasParamMod;
 uint16_t bat_voltage;
 
 short int last_option = USB_CONF_MENU;
-volatile int round_time_ms;
+
 static short int toggled_menu = MAIN_MENU;
 
 static short int round_finished = FALSE;
@@ -120,24 +122,24 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM10) {
-		round_time_ms++;
+		BasParamMod.round_time_ms++;
 		time++;
 		inactivity_timeout++;
 		if (time++ >= 1000) {
 			time = 0;
-			tick_time();
+			BasParamMod.tickTime(&BasParamMod);
 		}
 		if (inactivity_timeout > 10000){
 		//TODO: save state avg vel,dist,time
-			eval_velocity();
-			reset_basic_params();
+			BasParamMod.evalVelocity(&BasParamMod);
+			BasParamMod.resetBasParams(&BasParamMod);
 		}
 	}
 }
 void my_delay_ms(int value){
-	round_time_ms = 0;
+	BasParamMod.round_time_ms = 0;
 	HAL_TIM_Base_Start_IT(&htim10);
-	while(round_time_ms <value)
+	while(BasParamMod.round_time_ms <value)
 	{
 	}
 	return;
@@ -151,18 +153,12 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-	extern char velocity_string[6];
-	extern char distance_string[15];
-	extern char time_sec[3];
-	extern char time_min[3];
-	extern char time_hrs[3];
-
 	 menu_state menu[] = {
-			 {.patterns = {{0,FIRST_ROW,"V:"},{3,FIRST_ROW, velocity_string}, {9,FIRST_ROW,"km/h"}, {0,SECOND_ROW,"T:"}, {3,SECOND_ROW,time_hrs}, {6, SECOND_ROW,"h"},{8,SECOND_ROW,time_min}, {10, SECOND_ROW,"m"}, {12,SECOND_ROW,time_sec}, {14, SECOND_ROW,"s"}}, .state = MAIN_MENU},
+			 {.patterns = {{0,FIRST_ROW,"V:"},{3,FIRST_ROW, BasParamMod.velocity_string}, {9, FIRST_ROW, "km/h"}, {0, SECOND_ROW, "T:"}, {3, SECOND_ROW, BasParamMod.time_hrs}, {6, SECOND_ROW, "h"},{8, SECOND_ROW, BasParamMod.time_min}, {10, SECOND_ROW, "m"}, {12, SECOND_ROW, BasParamMod.time_sec}, {14, SECOND_ROW, "s"}}, .state = MAIN_MENU},
 			 {.patterns = {{0,FIRST_ROW,"<AVG>"},{0,SECOND_ROW,"SPEED:"}, {12,SECOND_ROW, "km/h"}}, .state = STAT_MENU},
-			 {.patterns = {{2,FIRST_ROW,"<TOTAL> DIST:"}, {5,SECOND_ROW, distance_string}, {14,SECOND_ROW,"km"}}, .state = STAT_MENU2},
+			 {.patterns = {{2,FIRST_ROW,"<TOTAL> DIST:"}, {5,SECOND_ROW, BasParamMod.distance_string}, {14,SECOND_ROW,"km"}}, .state = STAT_MENU2},
 			 {.patterns = {{0,FIRST_ROW,"<USB CONF MODE>"}}, .state = USB_CONF_MENU, .substate = USB_SUBSTATE_INIT},
-			 {.patterns = {{0,FIRST_ROW,"<BATT LVL[%]>"},{13,FIRST_ROW, BattControl.str_battery_level}}, .state = BATT_LEVEL}
+			 {.patterns = {{0,FIRST_ROW,"<BATT LVL[%]>"},{13, FIRST_ROW, BattControl.str_battery_level}}, .state = BATT_LEVEL}
 			 };
   /* USER CODE END 1 */
 
@@ -199,21 +195,21 @@ HAL_ADC_Start_DMA(&hadc1, &(BattControl.bat_voltage), 1);
 	while (1) {
 		if (round_finished) {
 			eval_velocity();
-			aggregate_basic_params();
+			BasParamMod.aggrParams(&BasParamMod);
 			round_finished = 0;
-			round_time_ms = 0;
+			BasParamMod.round_time_ms = 0;
 			inactivity_timeout = 0;
 		}
 		switch (toggled_menu) {
 		case MAIN_MENU:
-			time_to_string();
+			BasParamMod.timeToStr(&BasParamMod);
 			//TODO: evalue velocity and other variables
 			break;
 		case STAT_MENU:
 
 			break;
 		case STAT_MENU2:
-			eval_dist_avg_vel();
+			BasParamMod.evalDist(&BasParamMod);
 			break;
 		case BATT_LEVEL:
 			BattControl.battlvlToStr(&BattControl);
