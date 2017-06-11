@@ -11,21 +11,28 @@
 extern volatile int round_time_ms;
 extern uint16_t bat_voltage;
 extern uint8_t received_data[USB_COMM_BUF_SIZE];
-extern uint8_t received_data_flag;
 extern short int retry_count;
 extern uint8_t data_to_send[USB_COMM_BUF_SIZE];
 extern uint8_t message_length;
 short int retry_count = 0;
 
-extern volatile long long periods;
 char battery_level[3];
 char velocity_string[6];
+char distance_string[15];
 char time_sec[3];
 char time_hrs[3];
 char time_min[3];
+
 short int t_secs;
 short int t_mins;
 short int t_hours;
+
+char dist_string[15];
+int t_secs_total;
+int t_mins_total;
+int t_hours_total;
+int dist_total;
+
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
 
 int eval_battery_level(){
@@ -45,6 +52,30 @@ int draw_state_lcd(menu_state *ms) {
 	}
 
 	return 0;
+}
+void aggregate_basic_params(){
+
+t_secs_total += t_secs;
+t_mins_total += t_mins;
+t_hours_total += t_hours;
+dist_total++;
+
+}
+void eval_dist_avg_vel(){
+	float radius = 0.5 / 1000;
+	float dist = 2 * 3.14 * radius * dist_total;
+
+	char result[16] = { 0 };
+	char buf2[4];
+	char buf[16];
+	int decimal_part = ((int) (dist * 100.0)) % 100;
+	itoa((int) dist, buf, 10);
+	itoa(decimal_part, buf2, 10);
+
+	strncpy(result, buf, 2);
+	strncat(result, ",", 1);
+	strncat(result, buf2, 2);
+	strcpy(distance_string, result);
 }
 void reset_basic_params(){
 	t_secs = 0;

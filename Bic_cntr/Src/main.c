@@ -153,6 +153,7 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 	extern char velocity_string[6];
+	extern char distance_string[15];
 	extern char time_sec[3];
 	extern char time_min[3];
 	extern char time_hrs[3];
@@ -160,8 +161,8 @@ int main(void)
 
 	 menu_state menu[] = {
 			 {.patterns = {{0,FIRST_ROW,"V:"},{3,FIRST_ROW, velocity_string}, {9,FIRST_ROW,"km/h"}, {0,SECOND_ROW,"T:"}, {3,SECOND_ROW,time_hrs}, {6, SECOND_ROW,"h"},{8,SECOND_ROW,time_min}, {10, SECOND_ROW,"m"}, {12,SECOND_ROW,time_sec}, {14, SECOND_ROW,"s"}}, .state = MAIN_MENU},
-			 {.patterns = {{1,SECOND_ROW,"SPEED:"}, {12,SECOND_ROW, "km/h"}, {0,FIRST_ROW,"<AVG> ACCEL:"},{15,FIRST_ROW,"G"}}, .state = STAT_MENU},
-			 {.patterns = {{2,FIRST_ROW,"<TOTAL> DIST:"}, {14,SECOND_ROW,"km"}}, .state = STAT_MENU2},
+			 {.patterns = {{0,FIRST_ROW,"<AVG>"},{0,SECOND_ROW,"SPEED:"}, {12,SECOND_ROW, "km/h"}}, .state = STAT_MENU},
+			 {.patterns = {{2,FIRST_ROW,"<TOTAL> DIST:"}, {5,SECOND_ROW, distance_string}, {14,SECOND_ROW,"km"}}, .state = STAT_MENU2},
 			 {.patterns = {{0,FIRST_ROW,"<USB CONF MODE>"}}, .state = USB_CONF_MENU, .substate = USB_SUBSTATE_INIT},
 			 {.patterns = {{0,FIRST_ROW,"<BATT LVL[%]>"},{13,FIRST_ROW, battery_level}}, .state = BATT_LEVEL}
 			 };
@@ -200,6 +201,7 @@ HAL_ADC_Start_DMA(&hadc1, &bat_voltage,1);
 	while (1) {
 		if (round_finished) {
 			eval_velocity();
+			aggregate_basic_params();
 			round_finished = 0;
 			round_time_ms = 0;
 			inactivity_timeout = 0;
@@ -210,10 +212,10 @@ HAL_ADC_Start_DMA(&hadc1, &bat_voltage,1);
 			//TODO: evalue velocity and other variables
 			break;
 		case STAT_MENU:
-			//TODO: evalue average and total variables
+
 			break;
 		case STAT_MENU2:
-			//TODO: evalue average and total variables
+			eval_dist_avg_vel();
 			break;
 		case BATT_LEVEL:
 			battery_lvl_to_char(eval_battery_level());
