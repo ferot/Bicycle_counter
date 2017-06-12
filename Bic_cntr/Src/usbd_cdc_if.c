@@ -267,7 +267,7 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
 	USBD_CDC_ReceivePacket(&hUsbDeviceFS);
 
 	 uint8_t iter;
-	  for(iter = 0; iter<(*Len) + 1; ++iter){
+	  for(iter = 0; iter < (*Len) + 1; ++iter){
 	   received_data[iter] = Buf[iter];
 	  }
 //	  strlcpy(received_data, Buf, (*Len) + 1);

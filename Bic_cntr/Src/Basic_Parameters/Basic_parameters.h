@@ -10,8 +10,6 @@
 
 typedef struct Basic_Parameter *p_BasicParamPtr;
 
-void aggregate_basic_params(p_BasicParamPtr);
-void evalVelocity(p_BasicParamPtr basParamPtr);
 /**
  * Module responsible for handling basic parameters,
  * such as : time, distance, velocity

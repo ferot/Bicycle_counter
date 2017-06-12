@@ -51,6 +51,8 @@
 #include "menu.h"
 #include "Battery_Control/Battery_Control.h"
 #include "Basic_Parameters/Basic_parameters.h"
+#include "PC_Interface/PC_Interface.h"
+
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -63,7 +65,6 @@ TIM_HandleTypeDef htim10;
 /* Private variables ---------------------------------------------------------*/
 extern Battery_Control BattControl;
 extern Basic_Parameter BasParamMod;
-uint16_t bat_voltage;
 
 short int last_option = USB_CONF_MENU;
 
@@ -75,12 +76,9 @@ volatile int inactivity_timeout;
 volatile long long periods;
 
 /*USB Communication related*/
-uint8_t data_to_send[USB_COMM_BUF_SIZE];
-uint8_t message_length = 0;
+extern PCI_Interface usbInterfaceMod;
 
-uint8_t received_data_flag = FALSE;
-uint8_t received_data[40] = {0};
-void reset_basic_params();
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -194,7 +192,7 @@ HAL_ADC_Start_DMA(&hadc1, &(BattControl.bat_voltage), 1);
   /* USER CODE BEGIN WHILE */
 	while (1) {
 		if (round_finished) {
-			eval_velocity();
+			BasParamMod.evalVelocity(&BasParamMod);
 			BasParamMod.aggrParams(&BasParamMod);
 			round_finished = 0;
 			BasParamMod.round_time_ms = 0;
@@ -215,15 +213,15 @@ HAL_ADC_Start_DMA(&hadc1, &(BattControl.bat_voltage), 1);
 			BattControl.battlvlToStr(&BattControl);
 			break;
 		case USB_CONF_MENU:
-			if (received_data_flag == TRUE) {
-				received_data_flag = FALSE;
-				int a = usb_set(state);
-				char buf[2];
-				itoa(a, buf, 10);
-				TM_HD44780_Puts(0, SECOND_ROW, buf);
-			} else {
-				TM_HD44780_Puts(0, SECOND_ROW, "Awaiting connection...");
-			}
+//			if (received_data_flag == TRUE) {
+//				received_data_flag = FALSE;
+//				int a = usb_set(state);
+//				char buf[2];
+//				itoa(a, buf, 10);
+//				TM_HD44780_Puts(0, SECOND_ROW, buf);
+//			} else {
+//				TM_HD44780_Puts(0, SECOND_ROW, "Awaiting connection...");
+//			}
 			break;
 		}
 

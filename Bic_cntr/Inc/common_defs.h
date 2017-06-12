@@ -8,7 +8,6 @@
 #ifndef COMMON_DEFS_H_
 #define COMMON_DEFS_H_
 
-#define USB_COMM_BUF_SIZE 40
 #define TRUE 1
 #define FALSE 0
 #define RETRY_COUNT 100
