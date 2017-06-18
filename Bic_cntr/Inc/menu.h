@@ -37,7 +37,5 @@ void tick_time();
 extern void time_to_string();
 extern char * eval_velocity();
 int draw_state_lcd(menu_state *ms);
-int usb_set(int * state);
-
 
 #endif /* MENU_H_ */

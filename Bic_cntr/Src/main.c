@@ -65,7 +65,7 @@ TIM_HandleTypeDef htim10;
 /* Private variables ---------------------------------------------------------*/
 extern Battery_Control BattControl;
 extern Basic_Parameter BasParamMod;
-
+extern PC_Interface usbInterfaceMod;
 short int last_option = USB_CONF_MENU;
 
 static short int toggled_menu = MAIN_MENU;
@@ -76,7 +76,7 @@ volatile int inactivity_timeout;
 volatile long long periods;
 
 /*USB Communication related*/
-extern PCI_Interface usbInterfaceMod;
+
 
 
 /* USER CODE END PV */
@@ -213,15 +213,17 @@ HAL_ADC_Start_DMA(&hadc1, &(BattControl.bat_voltage), 1);
 			BattControl.battlvlToStr(&BattControl);
 			break;
 		case USB_CONF_MENU:
-//			if (received_data_flag == TRUE) {
-//				received_data_flag = FALSE;
-//				int a = usb_set(state);
-//				char buf[2];
-//				itoa(a, buf, 10);
-//				TM_HD44780_Puts(0, SECOND_ROW, buf);
-//			} else {
-//				TM_HD44780_Puts(0, SECOND_ROW, "Awaiting connection...");
-//			}
+			if (usbInterfaceMod.receivedDataFlag == TRUE) {
+				usbInterfaceMod.receivedDataFlag = FALSE;
+				int a = usbInterfaceMod.runStateMachine(&usbInterfaceMod);
+				char buf[2];
+				itoa(a, buf, 10);
+				TM_HD44780_Puts(0, SECOND_ROW, buf);
+				Delayms(200);
+			} else {
+				TM_HD44780_Puts(0, SECOND_ROW, "Wait2connect...");
+				Delayms(200);
+			}
 			break;
 		}
 

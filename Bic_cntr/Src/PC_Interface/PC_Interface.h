@@ -12,6 +12,8 @@
 
 typedef struct PC_Interface *p_PCIntPtr;
 
+int state_machine(p_PCIntPtr PCIptr);
+
 typedef enum USB_SUBSTATE{
 	USB_SUBSTATE_INIT,
 	USB_SUBSTATE_ACK,
@@ -32,13 +34,7 @@ typedef struct PC_Interface{
 	uint8_t dataToSend[USB_COMM_BUF_SIZE];
 	char messageBuffer[USB_COMM_BUF_SIZE];
 
-	void (*battlvlToStr)(p_PCIntPtr);
-	void (*evalVelocity)(p_PCIntPtr);
-	void (*aggrParams)(p_PCIntPtr);
-	void (*timeToStr) (p_PCIntPtr);
-	void (*evalDist) (p_PCIntPtr);
-	void (*tickTime) (p_PCIntPtr);
-	void (*resetBasParams) (p_PCIntPtr);
+	int (*runStateMachine) (p_PCIntPtr);
 } PC_Interface;
 
 

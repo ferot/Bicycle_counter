@@ -44,8 +44,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"
 /* USER CODE BEGIN INCLUDE */
-	extern uint8_t received_data[USB_COMM_BUF_SIZE];
-	extern uint8_t received_data_flag;
+#include "PC_Interface/PC_Interface.h"
+extern PC_Interface usbInterfaceMod;
+
 /* USER CODE END INCLUDE */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -268,10 +269,10 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
 
 	 uint8_t iter;
 	  for(iter = 0; iter < (*Len) + 1; ++iter){
-	   received_data[iter] = Buf[iter];
+	   usbInterfaceMod.receivedData[iter] = Buf[iter];
 	  }
 //	  strlcpy(received_data, Buf, (*Len) + 1);
-	received_data_flag = 1;
+	usbInterfaceMod.receivedDataFlag = 1;
 	return (USBD_OK);
   /* USER CODE END 6 */ 
 }
