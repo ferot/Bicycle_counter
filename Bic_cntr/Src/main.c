@@ -58,7 +58,6 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
-
 TIM_HandleTypeDef htim10;
 
 /* USER CODE BEGIN PV */
@@ -69,15 +68,11 @@ extern PC_Interface usbInterfaceMod;
 short int last_option = USB_CONF_MENU;
 
 static short int toggled_menu = MAIN_MENU;
-
 static short int round_finished = FALSE;
+
 volatile int time;
 volatile int inactivity_timeout;
 volatile long long periods;
-
-/*USB Communication related*/
-
-
 
 /* USER CODE END PV */
 
@@ -92,19 +87,20 @@ static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
-/*
+/**
+ * Callback for handling low battery level
+ */
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
+	if (hadc->Instance == hadc1.Instance) {
+		if (BattControl.evalBattLevel(&BattControl)
+				< BattControl.low_level_threshold)
+			; //TODO:alert user; save state;
+	}
+}
+
+/**
  * Callback for handling contactron and menu button interrupt vectors
  */
-
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
-{
-if(hadc->Instance == hadc1.Instance)
-{
-	if(BattControl.evalBattLevel(&BattControl) < BattControl.low_level_threshold)
-		;//TODO:alert user; save state;
-}
-}
-
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == MENU_BUTTON_Pin) {
 		if (toggled_menu < MENU_SIZE - 1) {
@@ -118,6 +114,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	}
 }
 
+/**
+ * Callback for handling time ticks, inactivity watchdog
+ * and measuring wheel's round time
+ * @param timer handler
+ */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM10) {
 		BasParamMod.round_time_ms++;
@@ -127,18 +128,22 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			time = 0;
 			BasParamMod.tickTime(&BasParamMod);
 		}
-		if (inactivity_timeout > 10000){
-		//TODO: save state avg vel,dist,time
+		if (inactivity_timeout > 10000) {
+			//TODO: save state avg vel,dist,time
 			BasParamMod.evalVelocity(&BasParamMod);
 			BasParamMod.resetBasParams(&BasParamMod);
 		}
 	}
 }
-void my_delay_ms(int value){
+
+/**
+ * Function for sleeping for desired nr of miliseconds
+ * @param miliseconds
+ */
+void my_delay_ms(int value) {
 	BasParamMod.round_time_ms = 0;
 	HAL_TIM_Base_Start_IT(&htim10);
-	while(BasParamMod.round_time_ms <value)
-	{
+	while (BasParamMod.round_time_ms < value) {
 	}
 	return;
 }
@@ -152,11 +157,11 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 	 menu_state menu[] = {
-			 {.patterns = {{0,FIRST_ROW,"V:"},{3,FIRST_ROW, BasParamMod.velocity_string}, {9, FIRST_ROW, "km/h"}, {0, SECOND_ROW, "T:"}, {3, SECOND_ROW, BasParamMod.time_hrs}, {6, SECOND_ROW, "h"},{8, SECOND_ROW, BasParamMod.time_min}, {10, SECOND_ROW, "m"}, {12, SECOND_ROW, BasParamMod.time_sec}, {14, SECOND_ROW, "s"}}, .state = MAIN_MENU},
-			 {.patterns = {{0,FIRST_ROW,"<AVG>"},{0,SECOND_ROW,"SPEED:"}, {12,SECOND_ROW, "km/h"}}, .state = STAT_MENU},
-			 {.patterns = {{2,FIRST_ROW,"<TOTAL> DIST:"}, {5,SECOND_ROW, BasParamMod.distance_string}, {14,SECOND_ROW,"km"}}, .state = STAT_MENU2},
-			 {.patterns = {{0,FIRST_ROW,"<USB CONF MODE>"}}, .state = USB_CONF_MENU, .substate = USB_SUBSTATE_INIT},
-			 {.patterns = {{0,FIRST_ROW,"<BATT LVL[%]>"},{13, FIRST_ROW, BattControl.str_battery_level}}, .state = BATT_LEVEL}
+			 {.patterns = {{0, FIRST_ROW, "V:"}, {3, FIRST_ROW, BasParamMod.velocity_string}, {9, FIRST_ROW, "km/h"}, {0, SECOND_ROW, "T:"}, {3, SECOND_ROW, BasParamMod.time_hrs}, {6, SECOND_ROW, "h"},{8, SECOND_ROW, BasParamMod.time_min}, {10, SECOND_ROW, "m"}, {12, SECOND_ROW, BasParamMod.time_sec}, {14, SECOND_ROW, "s"}}, .state = MAIN_MENU},
+			 {.patterns = {{0, FIRST_ROW, "<AVG>"}, {0, SECOND_ROW, "SPEED:"}, {12, SECOND_ROW, "km/h"}}, .state = STAT_MENU},
+			 {.patterns = {{2, FIRST_ROW, "<TOTAL> DIST:"}, {5, SECOND_ROW, BasParamMod.distance_string}, {14, SECOND_ROW,"km"}}, .state = STAT_MENU2},
+			 {.patterns = {{0, FIRST_ROW, "<USB CONF MODE>"}}, .state = USB_CONF_MENU, .substate = USB_SUBSTATE_INIT},
+			 {.patterns = {{0, FIRST_ROW, "<BATT LVL[%]>"}, {13, FIRST_ROW, BattControl.str_battery_level}}, .state = BATT_LEVEL}
 			 };
   /* USER CODE END 1 */
 
@@ -176,15 +181,14 @@ int main(void)
   MX_ADC1_Init();
 
   /* USER CODE BEGIN 2 */
-HAL_ADC_Start_DMA(&hadc1, &(BattControl.bat_voltage), 1);
+	HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&(BattControl.bat_voltage), 1);
 
 //Screen Initialization
-	 TM_HD44780_Init(16, 2);
+	TM_HD44780_Init(16, 2);
 
-		TM_HD44780_Puts(0,FIRST_ROW,"Counter v.0.1");
-		TM_HD44780_Puts(0,SECOND_ROW, "Aut:Tomek Ferens");
-		my_delay_ms(1000);
-		int *state = USB_SUBSTATE_INIT;
+	TM_HD44780_Puts(0, FIRST_ROW, "Counter v.0.2");
+	TM_HD44780_Puts(0, SECOND_ROW, "Aut:Tomek Ferens");
+	my_delay_ms(1000);
 
   /* USER CODE END 2 */
 
