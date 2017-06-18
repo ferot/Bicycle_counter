@@ -95,6 +95,10 @@ int state_machine(p_PCIntPtr PCIptr) {
 		break;
 
 	case USB_SUBSTATE_ERROR:
+
+		memset(PCIptr->receivedData, 0, USB_COMM_BUF_SIZE);
+		memset(PCIptr->dataToSend, 0, USB_COMM_BUF_SIZE);
+
 		lcdPutStrSecRow("Error!!!");
 		lcdPutStrSecRow("Nxt -> Init state");
 

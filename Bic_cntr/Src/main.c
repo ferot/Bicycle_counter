@@ -95,7 +95,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
 	if (hadc->Instance == hadc1.Instance) {
 		if (BattControl.evalBattLevel(&BattControl)
 				< BattControl.low_level_threshold)
-			; //TODO:alert user; save state;
+			lcdPutStrSecRow("LOW BATT LVL!!!");
 	}
 }
 
