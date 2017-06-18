@@ -205,7 +205,6 @@ int main(void)
 		switch (toggled_menu) {
 		case MAIN_MENU:
 			BasParamMod.timeToStr(&BasParamMod);
-			//TODO: evalue velocity and other variables
 			break;
 		case STAT_MENU:
 
@@ -219,14 +218,16 @@ int main(void)
 		case USB_CONF_MENU:
 			if (usbInterfaceMod.receivedDataFlag == TRUE) {
 				usbInterfaceMod.receivedDataFlag = FALSE;
-				int a = usbInterfaceMod.runStateMachine(&usbInterfaceMod);
-				char buf[2];
-				itoa(a, buf, 10);
-				TM_HD44780_Puts(0, SECOND_ROW, buf);
-				Delayms(200);
+				int state = usbInterfaceMod.runStateMachine(&usbInterfaceMod);
+				char state_str[2];
+				itoa(state, state_str, 10);
+				char str[15];
+				strcpy(str, "Actual state : ");
+				strncat(str, state_str, 1);
+
+				lcdPutStrSecRow(str);
 			} else {
-				TM_HD44780_Puts(0, SECOND_ROW, "Wait2connect...");
-				Delayms(200);
+				lcdPutStrSecRow("Wait2connect...");
 			}
 			break;
 		}

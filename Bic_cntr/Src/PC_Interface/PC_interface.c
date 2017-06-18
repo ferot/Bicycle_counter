@@ -25,7 +25,7 @@ PC_Interface usbInterfaceMod = {
  */
 void lcdPutStrSecRow(char* str) {
 	TM_HD44780_Puts(0, SECOND_ROW, str);
-	Delayms(200);
+	Delayms(600);
 }
 
 /**

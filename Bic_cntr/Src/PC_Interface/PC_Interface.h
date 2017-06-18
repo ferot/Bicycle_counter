@@ -13,6 +13,7 @@
 typedef struct PC_Interface *p_PCIntPtr;
 
 int state_machine(p_PCIntPtr PCIptr);
+void lcdPutStrSecRow(char* str);
 
 typedef enum USB_SUBSTATE{
 	USB_SUBSTATE_INIT,
